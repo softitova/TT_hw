@@ -15,20 +15,20 @@ let rec mul x y = match (x, y)  with
 	|(Z, y) -> Z
 	|(x, S y) -> add (mul x y) (x);;
 
-let rec deg x y = match (x, y) with
+let rec power x y = match (x, y) with
 	(x, Z) -> S Z
 	|(Z, x) -> Z
 	|(S Z, x) -> S Z
-	|(x, S y) -> mul (deg x y) (x);;
+	|(x, S y) -> mul (power x y) (x);;
 
-let peano_from_int n =
+let peano_of_int n =
 	 let rec make_from_int n p_n =
 	 	 match n with
 		 	0 ->p_n
 			| x -> S(make_from_int (x - 1) p_n) in
 	  make_from_int n Z;;
 
-let print_peano p_n =
+let int_of_peano p_n =
 	let rec make_from_peano p_n str =
 		match p_n with
 			Z -> "0"^str
@@ -37,47 +37,56 @@ let print_peano p_n =
 
 let inc p_n = add(p_n)(S Z);;
 
+let rec div x y = match sub (inc (x)) (y)  with
+        Z -> Z
+        |_ -> add (S Z) (div  (sub x y) (y));;
+
+
+print_string(int_of_peano (div (peano_of_int(2)) (peano_of_int (1)))^"\n");;
+print_string(int_of_peano (div (peano_of_int(8)) (peano_of_int (3)))^"\n");;
+print_string(int_of_peano (div (peano_of_int(2)) (peano_of_int (5)))^"\n");;
+print_string(int_of_peano (div (peano_of_int(0)) (peano_of_int (1)))^"\n");;
+
 let dec p_n = 
  	match p_n with
 		Z -> Z
 		|_ -> sub(p_n)(S Z);;
 
+print_string("powerree testing\n");;
 
-print_string("degree testing\n");;
-
-print_string(print_peano (deg (peano_from_int 2) (peano_from_int 2))^" ");;
-print_string(print_peano (deg (peano_from_int 0) (peano_from_int 2))^" ");;
-print_string(print_peano (deg (peano_from_int 1) (peano_from_int 2))^" ");;
-print_string(print_peano (deg (peano_from_int 1) (peano_from_int 0))^" ");;
-print_string(print_peano (deg (peano_from_int 3) (peano_from_int 0))^"\n");;
+print_string(int_of_peano (power (peano_of_int 2) (peano_of_int 2))^" ");;
+print_string(int_of_peano (power (peano_of_int 0) (peano_of_int 2))^" ");;
+print_string(int_of_peano (power (peano_of_int 1) (peano_of_int 2))^" ");;
+print_string(int_of_peano (power (peano_of_int 1) (peano_of_int 0))^" ");;
+print_string(int_of_peano (power (peano_of_int 3) (peano_of_int 0))^"\n");;
 
 print_string("substract testing\n");; 
 
-print_string(print_peano (sub (peano_from_int 0) (peano_from_int 2))^" ");;
-print_string(print_peano (sub (peano_from_int 1) (peano_from_int 2))^" ");;
-print_string(print_peano (sub (peano_from_int 1) (peano_from_int 0))^" ");;
-print_string(print_peano (sub (peano_from_int 3) (peano_from_int 1))^"\n");;
+print_string(int_of_peano (sub (peano_of_int 0) (peano_of_int 2))^" ");;
+print_string(int_of_peano (sub (peano_of_int 1) (peano_of_int 2))^" ");;
+print_string(int_of_peano (sub (peano_of_int 1) (peano_of_int 0))^" ");;
+print_string(int_of_peano (sub (peano_of_int 3) (peano_of_int 1))^"\n");;
 
 print_string("add testing\n");;
 
-print_string(print_peano (add (peano_from_int 0) (peano_from_int 2))^" ");;
-print_string(print_peano (add (peano_from_int 1) (peano_from_int 2))^" ");;
-print_string(print_peano (add (peano_from_int 1) (peano_from_int 0))^" ");;
-print_string(print_peano (add (peano_from_int 3) (peano_from_int 1))^"\n");;
+print_string(int_of_peano (add (peano_of_int 0) (peano_of_int 2))^" ");;
+print_string(int_of_peano (add (peano_of_int 1) (peano_of_int 2))^" ");;
+print_string(int_of_peano (add (peano_of_int 1) (peano_of_int 0))^" ");;
+print_string(int_of_peano (add (peano_of_int 3) (peano_of_int 1))^"\n");;
 
 print_string("multiply testing\n");;
 
-print_string(print_peano (mul (peano_from_int 0) (peano_from_int 2))^" ");;
-print_string(print_peano (mul (peano_from_int 1) (peano_from_int 2))^" ");;
-print_string(print_peano (mul (peano_from_int 1) (peano_from_int 0))^" ");;
-print_string(print_peano (mul (peano_from_int 3) (peano_from_int 2))^"\n");;
+print_string(int_of_peano (mul (peano_of_int 0) (peano_of_int 2))^" ");;
+print_string(int_of_peano (mul (peano_of_int 1) (peano_of_int 2))^" ");;
+print_string(int_of_peano (mul (peano_of_int 1) (peano_of_int 0))^" ");;
+print_string(int_of_peano (mul (peano_of_int 3) (peano_of_int 2))^"\n");;
 
 print_string("increment testing\n");;
 
-print_string(print_peano (inc (peano_from_int 2))^" ");;
-print_string(print_peano (inc (peano_from_int 0))^"\n");;
+print_string(int_of_peano (inc (peano_of_int 2))^" ");;
+print_string(int_of_peano (inc (peano_of_int 0))^"\n");;
 
 print_string("decrement testing\n");;
 
-print_string(print_peano (dec (peano_from_int 2))^" ");;
-print_string(print_peano (dec (peano_from_int 0))^" ");;
+print_string(int_of_peano (dec (peano_of_int 2))^" ");;
+print_string(int_of_peano (dec (peano_of_int 0))^" ");;
