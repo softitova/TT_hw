@@ -36,8 +36,8 @@ and split x y z = match x with
 		
 and merge_sort cmp x = match x with
 	| (Nil | Cons(_, Nil)) -> x
-	| _ -> let (pri,seg) = split x Nil Nil in
-	(merge cmp (merge_sort cmp pri) (merge_sort cmp seg));;
+	| _ -> let (firstPart, secondPart) = split x Nil Nil in
+	(merge cmp (merge_sort cmp firstPart) (merge_sort cmp secondPart));;
 
 
 let m = merge_sort (<) c;;
