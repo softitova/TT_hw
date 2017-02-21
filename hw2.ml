@@ -28,13 +28,13 @@ let rec merge cmp x y = match (x, y) with
 	|((Cons(h1, t1)), (Cons(h2, t2))) ->
 	if cmp h1 h2
 		then Cons(h1, merge cmp t1 y)
-	else Cons(h2, merge cmp x t2)
+	else Cons(h2, merge cmp x t2);;
 
-and split x y z = match x with
+let rec split x y z = match x with
 	| Nil -> (y,z)
-	| Cons(x, other) -> split (other) (z) (Cons(x, y))
+	| Cons(x, other) -> split (other) (z) (Cons(x, y));;
 		
-and merge_sort cmp x = match x with
+let rec merge_sort cmp x = match x with
 	| (Nil | Cons(_, Nil)) -> x
 	| _ -> let (firstPart, secondPart) = split x Nil Nil in
 	(merge cmp (merge_sort cmp firstPart) (merge_sort cmp secondPart));;
