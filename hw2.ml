@@ -22,23 +22,23 @@ print_list c 0;;
 let d = rev c;;
 print_list d 0;;
 
-let rec merge cmp x y = match (x, y) with 
+let rec merge x y = match (x, y) with 
 	|(Nil, _) -> y
 	|(_, Nil) -> x
 	|((Cons(h1, t1)), (Cons(h2, t2))) ->
-	if cmp h1 h2
-		then Cons(h1, merge cmp t1 y)
-	else Cons(h2, merge cmp x t2);;
+	if(( <) h1 h2)
+		then Cons(h1, merge t1 y)
+	else Cons(h2, merge x t2);;
 
 let rec split x y z = match x with
 	| Nil -> (y,z)
 	| Cons(x, other) -> split (other) (z) (Cons(x, y));;
 		
-let rec merge_sort cmp x = match x with
+let rec merge_sort x = match x with
 	| (Nil | Cons(_, Nil)) -> x
 	| _ -> let (firstPart, secondPart) = split x Nil Nil in
-	(merge cmp (merge_sort cmp firstPart) (merge_sort cmp secondPart));;
+	(merge (merge_sort firstPart) (merge_sort secondPart));;
 
 
-let m = merge_sort (<) c;;
+let m = merge_sort c;;
  print_list m 0;;
