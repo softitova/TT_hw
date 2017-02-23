@@ -4,5 +4,4 @@ val string_of_lambda: lambda -> string
 val lambda_of_string: string -> lambda
 
 val is_alpha_equivalent : lambda -> lambda -> bool
-
 val free: lambda -> string -> bool

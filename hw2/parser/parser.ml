@@ -69,5 +69,3 @@ let rec free lambda str  =
 	|Abs(x, y) ->
 		if (x = str) then false  else free y str;;
 
-
-

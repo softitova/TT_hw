@@ -1,6 +1,6 @@
 open Parser;;
 
-(* teste for lambda of string and string of lambda parsers*)
+(* tests for lambda of string and string of lambda parsers*)
 
 print_string (string_of_lambda (lambda_of_string "\\x.\\y.xy")); print_string "\n";;
 print_string (string_of_lambda (lambda_of_string "xy")); print_string "\n";;
