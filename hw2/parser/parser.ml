@@ -54,3 +54,59 @@ lambda_of_string "(((((((\\y.y)))))))";;
 lambda_of_string "((z))(\\x.\\y.((xy)))";;
 lambda_of_string "\\x.\\y.xy";;
 lambda_of_string "\\x.\\y.xy";;
+
+
+
+let rec subst lambda oldVar newVar = 
+	match lambda with 
+	|Var(x) -> if (x = oldVar) then Var(newVar) else Var(x)
+	|App(x, y) ->App(subst x oldVar newVar, subst y oldVar newVar) 
+	|Abs(x, y) -> 
+		if (x = oldVar) then Abs(x, y) else Abs(x, subst y oldVar newVar) 
+
+
+let rec is_alpha_equivalent x y = 
+	match (x, y) with
+	|(Var xx, Var yy) -> (xx = yy)
+	|(App(x1, x2), App(y1, y2)) ->
+		((is_alpha_equivalent x1 y1) && (is_alpha_equivalent x2  y2))
+	|(Abs(x1, x2), Abs(y1, y2)) -> 
+		is_alpha_equivalent (subst x2 x1 "t") (subst y2 y1 "t")
+	|_ -> false;;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

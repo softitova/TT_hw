@@ -14,3 +14,32 @@ lambda_of_string "(((((((\\y.y)))))))";;
 lambda_of_string "((z))(\\x.\\y.((xy)))";;
 lambda_of_string "\\x.\\y.xy";;
 lambda_of_string "\\x.\\y.xy";;
+
+print_string (string_of_bool (
+(is_alpha_equivalent (lambda_of_string "x") (lambda_of_string "x"))))
+
+let fst t =
+	let (x, y) = t in
+		x;;
+
+let snd t =
+	let (x, y) = t in
+		y;;
+
+let t1 = (lambda_of_string "(x)", lambda_of_string "(x)");;
+let t2 = (lambda_of_string "xy", lambda_of_string "xy");;
+let t3 = (lambda_of_string "\\x.xy", lambda_of_string "\\y.yy");;
+let t4 = (lambda_of_string "\\x.x", lambda_of_string "\\y.y");;
+let t5 = (lambda_of_string "(\\x.x)(z)", lambda_of_string "(\\y.y)(z)");;
+print_string (string_of_bool (is_alpha_equivalent (fst t1) (snd t1))); print_string "\n";; 
+print_string (string_of_bool (is_alpha_equivalent (fst t2) (snd t2))); print_string "\n";; 
+print_string (string_of_bool (is_alpha_equivalent (fst t3) (snd t3))); print_string "\n";; 
+print_string (string_of_bool (is_alpha_equivalent (fst t4) (snd t4))); print_string "\n";; 
+print_string (string_of_bool (is_alpha_equivalent (fst t5) (snd t5))); print_string "\n";; 
+
+
+
+
+
+
+
