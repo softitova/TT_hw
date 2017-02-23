@@ -8,15 +8,12 @@ let rec rev_append l1 l2 = match l1 with
 	 
 let rec rev l = rev_append l Nil;;
 
-let c = Cons(6, Cons(1,Nil));;
+let c = Cons(6, Cons(7,Nil));;
 
 let rec print_list l str =
 	match l with
 	|Nil -> print_int str
 	|Cons(x, y) -> print_list y  (str*10 + x) ;;
-
-
-
 
 print_list c 0;;
 let d = rev c;;
@@ -26,7 +23,7 @@ let rec merge x y = match (x, y) with
 	|(Nil, _) -> y
 	|(_, Nil) -> x
 	|((Cons(h1, t1)), (Cons(h2, t2))) ->
-	if(( <) h1 h2)
+	if ((<) h1 h2)
 		then Cons(h1, merge t1 y)
 	else Cons(h2, merge x t2);;
 
