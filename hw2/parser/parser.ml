@@ -45,18 +45,6 @@ let string_of_lambda lambda =
 			| App (x, y) -> s^"("^(to_string x "")^(to_string y "")^")" in
 	to_string lambda "";;
 
-lambda_of_string("xy");;
-lambda_of_string "\\x.\\y.xy";;
-lambda_of_string "xy";;
-lambda_of_string "(x)";;
-(*lambda_of_string "()";;*) 
-lambda_of_string "(((((((\\y.y)))))))";;
-lambda_of_string "((z))(\\x.\\y.((xy)))";;
-lambda_of_string "\\x.\\y.xy";;
-lambda_of_string "\\x.\\y.xy";;
-
-
-
 let rec subst lambda oldVar newVar = 
 	match lambda with 
 	|Var(x) -> if (x = oldVar) then Var(newVar) else Var(x)
@@ -73,40 +61,3 @@ let rec is_alpha_equivalent x y =
 	|(Abs(x1, x2), Abs(y1, y2)) -> 
 		is_alpha_equivalent (subst x2 x1 "t") (subst y2 y1 "t")
 	|_ -> false;;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
