@@ -37,6 +37,14 @@ let lambda_of_string s =
 		
 	parse_lambda();;
 
+let string_of_lambda lambda = 
+	let rec to_string lambda s = 
+		match lambda with 
+			| Var (x) -> s ^"("^x^")"
+			| Abs (x, y) -> s^"(\\"^x^(to_string y "")^")"
+			| App (x, y) -> s^"("^(to_string x "")^(to_string y "")^")" in
+	to_string lambda "";;
+
 lambda_of_string("xy");;
 lambda_of_string "\\x.\\y.xy";;
 lambda_of_string "xy";;
