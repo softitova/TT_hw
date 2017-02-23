@@ -48,7 +48,7 @@ let string_of_lambda lambda =
 let rec subst lambda oldVar newVar = 
 	match lambda with 
 	|Var(x) -> if (x = oldVar) then Var(newVar) else Var(x)
-	|App(x, y) ->App(subst x oldVar newVar, subst y oldVar newVar) 
+	|App(x, y) -> App(subst x oldVar newVar, subst y oldVar newVar) 
 	|Abs(x, y) -> 
 		if (x = oldVar) then Abs(x, y) else Abs(x, subst y oldVar newVar) 
 
@@ -61,3 +61,13 @@ let rec is_alpha_equivalent x y =
 	|(Abs(x1, x2), Abs(y1, y2)) -> 
 		is_alpha_equivalent (subst x2 x1 "t") (subst y2 y1 "t")
 	|_ -> false;;
+
+let rec free lambda str  = 
+	match lambda with
+	|Var(x) -> true 
+	|App(x, y) -> (free x str) && (free y str)
+	|Abs(x, y) ->
+		if (x = str) then false  else free y str;;
+
+
+

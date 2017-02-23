@@ -1,4 +1,7 @@
 open Parser;;
+
+(* teste for lambda of string and string of lambda parsers*)
+
 print_string (string_of_lambda (lambda_of_string "\\x.\\y.xy")); print_string "\n";;
 print_string (string_of_lambda (lambda_of_string "xy")); print_string "\n";;
 print_string (string_of_lambda (lambda_of_string "(x)")); print_string "\n";;
@@ -9,14 +12,12 @@ print_string (string_of_lambda (lambda_of_string "\\x.\\y.xy")); print_string "\
 lambda_of_string "\\x.\\y.xy";;
 lambda_of_string "xy";;
 lambda_of_string "(x)";;
-(*lambda_of_string "()";;*)
 lambda_of_string "(((((((\\y.y)))))))";;
 lambda_of_string "((z))(\\x.\\y.((xy)))";;
 lambda_of_string "\\x.\\y.xy";;
 lambda_of_string "\\x.\\y.xy";;
 
-print_string (string_of_bool (
-(is_alpha_equivalent (lambda_of_string "x") (lambda_of_string "x"))))
+(*helper functions for tuple created by T*)
 
 let fst t =
 	let (x, y) = t in
@@ -25,6 +26,7 @@ let fst t =
 let snd t =
 	let (x, y) = t in
 		y;;
+(*tests for alpha equivalence of two lambda functions*)
 
 let t1 = (lambda_of_string "(x)", lambda_of_string "(x)");;
 let t2 = (lambda_of_string "xy", lambda_of_string "xy");;
@@ -38,6 +40,16 @@ print_string (string_of_bool (is_alpha_equivalent (fst t4) (snd t4))); print_str
 print_string (string_of_bool (is_alpha_equivalent (fst t5) (snd t5))); print_string "\n";; 
 
 
+(* tests for free substitution of variable to lambda *)
+
+print_string (string_of_bool(free (fst t1)("y"))); print_string "\n";;
+print_string (string_of_bool(free (fst t2)("y"))); print_string "\n";;
+print_string (string_of_bool(free (fst t3)("x"))); print_string "\n";;
+print_string (string_of_bool(free (fst t1)("y"))); print_string "\n";;
+print_string (string_of_bool(free (fst t4)("z"))); print_string "\n";;
+print_string (string_of_bool(free (fst t4)("x"))); print_string "\n";;
+print_string (string_of_bool(free (fst t5)("x"))); print_string "\n";;
+print_string (string_of_bool(free (fst t5)("z"))); print_string "\n";;
 
 
 
