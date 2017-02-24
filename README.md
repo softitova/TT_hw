@@ -1,4 +1,4 @@
 # TT_hw
 
 
-There are tasks at the university Type theory course
+There are tasks for the university Type theory course
