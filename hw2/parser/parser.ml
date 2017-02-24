@@ -8,9 +8,15 @@ let lambda_of_string s =
 	let eat x  = if get() <> x then failwith "stop eating" else next() in
 
 	let parse_ident_str()  = 
-		let cur = String.make 1 (get ()) in
+		let rec  rec_parse s = 
+			if ((get() >='0') && (get() <= '9')) then
+				let cur_dig = get() in
+			 	next();
+				rec_parse  (s^ (String.make 1 (cur_dig))) 
+				else s in
+		let cur =  String.make 1 (get ()) in
 		next();
-		cur in 
+		rec_parse cur in 
 	
 	let parse_ident() = 
 	        Var(parse_ident_str()) in
@@ -46,6 +52,7 @@ let string_of_lambda lambda =
 	to_string lambda "";;
 
 let rec subst lambda oldVar newVar = 
+	print_string (string_of_lambda(lambda)^ " "^oldVar^" "^newVar^" \n");
 	match lambda with 
 	|Var(x) -> if (x = oldVar) then Var(newVar) else Var(x)
 	|App(x, y) -> App(subst x oldVar newVar, subst y oldVar newVar) 
@@ -53,14 +60,29 @@ let rec subst lambda oldVar newVar =
 		if (x = oldVar) then Abs(x, y) else Abs(x, subst y oldVar newVar) 
 
 
-let rec is_alpha_equivalent x y = 
-	match (x, y) with
-	|(Var xx, Var yy) -> (xx = yy)
-	|(App(x1, x2), App(y1, y2)) ->
-		((is_alpha_equivalent x1 y1) && (is_alpha_equivalent x2  y2))
-	|(Abs(x1, x2), Abs(y1, y2)) -> 
-		is_alpha_equivalent (subst x2 x1 "t") (subst y2 y1 "t")
-	|_ -> false;;
+let is_alpha_equivalent x y = 
+
+	let counter = ref 0 in
+	
+	let name_generation () =
+        	let ret = "t"^ string_of_int !counter in
+       		counter := !counter + 1;
+  		ret in
+
+
+	let rec make x y = match (x, y) with
+		|(Var xx, Var yy) -> (xx = yy)
+		|(App(x1, x2), App(y1, y2)) ->
+			((make x1 y1) && (make  x2  y2))
+		|(Abs(x1, x2), Abs(y1, y2)) -> 
+			let next_free_character = (name_generation()) in
+			make (subst x2 x1 next_free_character) (subst y2 y1 next_free_character)
+		|_ -> false in
+
+	make x y;;
+
+
+
 
 let rec free lambda str  = 
 	match lambda with
@@ -68,4 +90,3 @@ let rec free lambda str  =
 	|App(x, y) -> (free x str) && (free y str)
 	|Abs(x, y) ->
 		if (x = str) then false  else free y str;;
-
