@@ -7,20 +7,20 @@ let rec add x y = match y with
 	|S yy -> S(add x yy);;
 
 let rec sub x y = match (x, y) with 
-	(x, Z)-> x
-	|(Z, y) -> Z
-	|(S x, S y)-> sub x y;;
+	(xx, Z)-> xx
+	|(Z, yy) -> Z
+	|(S xx, S yy)-> sub xx yy;;
 
 let rec mul x y = match (x, y)  with
-	(x, Z) -> Z
-	|(Z, y) -> Z
-	|(x, S y) -> add (mul x y) (x);;
+	(xx, Z) -> Z
+	|(Z, yy) -> Z
+	|(xx, S yy) -> add (mul xx yy) (xx);;
 
 let rec power x y = match (x, y) with
-	(x, Z) -> S Z
-	|(Z, x) -> Z
-	|(S Z, x) -> S Z
-	|(x, S y) -> mul (power x y) (x);;
+	(xx, Z) -> S Z
+	|(Z, xx) -> Z
+	|(S Z, xx) -> S Z
+	|(xx, S yy) -> mul (power xx yy) (xx);;
 
 let peano_of_int n =
 	 let rec make_from_int n p_n =
