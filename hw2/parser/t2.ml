@@ -25,11 +25,11 @@ lambda_of_string "\\x.\\y.xy";;
 (*helper functions for tuple created by T*)
 
 let fst t =
-	let (x, y) = t in
+let (x, y) = t in
 		x;;
 
 let snd t =
-	let (x, y) = t in
+let (x, y) = t in
 		y;;
 print_string("tests for alpha equivalence of two lambda functions\n");;
 
@@ -85,6 +85,15 @@ print_string (string_of_bool(free (fst t5)("x"))); print_string "\n";;
 print_string (string_of_bool(free (fst t5)("z"))); print_string "\n";;
 *)
 
+print_string("tests for free substitution\n");
+let theta = lambda_of_string"z" ;;
+let alpha = lambda_of_string"(x)(y)(\\x.x)(\\z.z)(\\w.vu)(\\a.b)";;
+let var = "x";;
+print_string (string_of_bool (free_subst theta alpha var )^"\n");;
 
 
+let theta = lambda_of_string"a" ;;
+let alpha = lambda_of_string"(\\a.b)";;
+let var = "b";; 
+print_string ((string_of_bool (free_subst theta alpha var))^"\n");;
 
