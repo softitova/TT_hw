@@ -26,12 +26,14 @@ lambda_of_string "\\x.\\y.xy";;
 
 let fst t =
 let (x, y) = t in
-		x;;
+	x;;
 
 let snd t =
 let (x, y) = t in
-		y;;
+	y;;
+
 print_string("tests for alpha equivalence of two lambda functions\n");;
+
 
 let t1 = (lambda_of_string "(x)", lambda_of_string "(x)");;
 let t2 = (lambda_of_string "xy", lambda_of_string "xy");;

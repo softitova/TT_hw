@@ -1,5 +1,6 @@
 type lambda = Var of string | Abs of string * lambda | App of lambda * lambda;;
 
+
 let lambda_of_string s = 
 
 	let s = s ^ ";" in
