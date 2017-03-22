@@ -1,4 +1,7 @@
-# TT_hw
+Type Theory course
+====
 
-
-There are tasks for the university Type theory course
+Repository contains hometasks for Type Theory course
+----
+* peano arithmetics
+* lambda calculus
