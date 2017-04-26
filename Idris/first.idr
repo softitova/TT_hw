@@ -1,4 +1,4 @@
-module first
+module Main
 
 lemmaAbbA : a = b -> b = a
 lemmaAbbA Refl = Refl
@@ -23,6 +23,7 @@ dualComm (S k) b = let ih = dualComm k b in -- k + b = b + k
                               let prev = cong ih in -- S (k + b) = S (b + k)
                                       rewrite lem in prev -- S (k + b)= b + S k === wwn
 
-
+main : IO ()
+main = putStrLn "All is correct!!!!!!!!!!"
 
 
