@@ -131,17 +131,19 @@ let solve system l r set = match (l, r) with
                 else 
                         (List.append system (make_solutions_list b d []), set);;
 
+let solve_system x =
+        try
+                let rec solve_helper x set  = match x with
+                         |[] -> x
+                         |(l,r)::t ->
+                                if (type_to_string (l) = type_to_string (r))
+                                        then solve_helper t set
+                                else 
+                                        let new_list, new_set = (solve t l r set) in
+                                        if ((List.length new_list) = StringSet.cardinal new_set) 
+                                                then new_list
+                                        else 
+                                                solve_helper new_list new_set
+                in solve_helper x StringSet.empty
+        with _ -> [];;
 
-let rec solve_helper x set  = match x with
-        |[] -> x
-        |(l,r)::t ->
-                if (type_to_string (l) = type_to_string (r))
-                        then solve_helper t set
-                else 
-                        let new_list, new_set = (solve t l r set) in
-                        if ((List.length new_list) = StringSet.cardinal new_set) 
-                                then new_list
-                        else 
-                                solve_helper new_list new_set;;
-(*
-let solve_system x = *)
