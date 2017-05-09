@@ -48,7 +48,10 @@ let system_to_equation x =
         let l, r = eq_helper x [] [] in
         let fresh_name = get_fresh_name x in
         (Fun(fresh_name, l), Fun(fresh_name, r));;
+let print_eq x str = print_system ( [x] )  
+let print_equation x = print_eq x "";;
 
+print_string(print_equation(system_to_equation s0));;
 (*
 
 
