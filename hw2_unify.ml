@@ -1,13 +1,10 @@
 type algebraic_term = Var of string | Fun of string * (algebraic_term list)
 
-(*val system_to_equation: (algebraic_term * algebraic_term) list -> (algebraic_term * algebraic_term)
-*)
+(*------------------- HELPER FUNCTIONS -----------------*)
 
 let rec list_to_string x str = match x with
-         |[]-> str
-         |h::t -> type_to_string h (" " ^  (list_to_string t str))
-
-
+        |[]-> str
+        |h::t -> type_to_string h (" " ^  (list_to_string t str))
 
 and type_to_string x str = match x with 
         |Var a -> a ^ " " ^ str
@@ -21,6 +18,9 @@ let rec system_to_string x str = match x with
 
 
 let print_system x = system_to_string x "";;
+
+
+
 
 let rec go x str = match x with
         |[]-> str
@@ -39,6 +39,7 @@ let get_fresh_name x = get_name x "fresh";;
 let s0 = [(Var "a", Var "b");(Var "a", Var "b")];;
 print_string(print_system s0);;
 
+(*----------------------PART | --------------------------*)
 
 let rec eq_helper x ll rr = match x with 
         |[] -> ll, rr
@@ -54,6 +55,7 @@ let print_equation x = print_eq x "";;
 print_string(print_equation(system_to_equation s0));;
 
 (*----------------------PART || -------------------------*)
+
 module StringMap = Map.Make (String);;
 
 let rec apply_helper_list y map = 
@@ -72,7 +74,8 @@ let apply_substitution x y =
                         |(ll, rr)::t -> fill_map t (StringMap.add ll rr m) in
 
         apply_helper y (fill_map x StringMap.empty);;
-(*----------------------PART |||--------------------------*)
+
+(*----------------------PART ||| -------------------------*)
 
 let rec list_check_helper x y res = match y with
         |[] -> res
@@ -84,15 +87,61 @@ let rec list_check_helper x y res = match y with
 let check_solution x y = list_check_helper x y true;;
 
 
-
-
-(* Test samples *)
 let at0 = Fun("f",[Fun("g",[Var "y"; Var "x"])]);;
 let s1 = [(Var "a", Var "b");(Var "x", Var "b")];;
 print_string(string_of_bool(check_solution ["a", Var"b"; "x", Var"z"] s1));;
 
 
+(*----------------------PART |V --------------------------*)
+
+exception OOps of string;;
+module StringSet  = Set.Make (String);;
+
+let rec list_contains x str = match x with
+         |[]-> false
+         |h::t -> type_contains h str ||  list_contains t str
+
+and type_contains x str = match x with
+        |Var a -> a = str
+        |Fun(a, b) -> list_contains b str;;
+
+let rec make_solutions_list b d res = match (b, d) with
+        |([], c) -> res
+        |(bh::bt, dh::dt) -> make_solutions_list bt dt ((bh, dh)::res);;
+
+let rec system_subst subst x res = match x with
+        |[] -> List.rev res
+        |(l,r)::t -> system_subst subst t 
+        (((apply_substitution subst l), (apply_substitution subst r))::res);; 
 
 
+let solve system l r set = match (l, r) with
+        |(Var a, b) ->
+                if (type_contains b a) 
+                        then raise (OOps ("no solution :("))
+                else let set = StringSet.add a set in
+                        ((List.append
+                        (system_subst [a,b] system []) [l,r]), set)
+                                
+                        
+        |(a, Var b) -> ((List.append system [Var b, a]), set) 
+        |(Fun(a,b), Fun(c,d)) -> 
+                if(a <> c) 
+                        then raise (OOps ("no solution :("))
+                else 
+                        (List.append system (make_solutions_list b d []), set);;
 
-(*let solve_system x = failwith "Not implemented";;*)
+
+let rec solve_helper x set  = match x with
+        |[] -> x
+        |(l,r)::t ->
+                if (type_to_string (l) = type_to_string (r))
+                        then solve_helper t set
+                else 
+                        let new_list, new_set = (solve t l r set) in
+                        if ((List.length new_list) = StringSet.cardinal new_set) 
+                                then new_list
+                        else 
+                                solve_helper new_list new_set;;
+(*
+let solve_system x = *)
