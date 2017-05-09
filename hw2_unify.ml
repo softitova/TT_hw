@@ -16,11 +16,11 @@ and type_to_string x str = match x with
 
 let rec system_to_string x str = match x with
         |[] -> str
-        |(l,r)::t -> type_to_string l "" ^ " = " ^  type_to_string r "" ^ "\n" ^
+        |(l,r)::t -> type_to_string l "" ^ "= " ^  type_to_string r "" ^ "\n" ^
         system_to_string t str;;
 
 
-
+let print_system x = system_to_string x "";;
 
 let rec go x str = match x with
         |[]-> str
@@ -33,9 +33,23 @@ and  simple_name x str = match x with
 let rec  get_name x str = match x with
         |[]-> str       
         |(l,r)::t -> simple_name l (simple_name r (get_name t str));;  
-(*let system_to_equation x =
+
+let get_fresh_name x = get_name x "fresh";;
+
+let s0 = [(Var "a", Var "b");(Var "a", Var "b")];;
+print_string(print_system s0);;
 
 
+let rec eq_helper x ll rr = match x with 
+        |[] -> ll, rr
+        |(lh, rh)::t -> eq_helper t (lh::ll) (rh::rr);; 
+
+let system_to_equation x = 
+        let l, r = eq_helper x [] [] in
+        let fresh_name = get_fresh_name x in
+        (Fun(fresh_name, l), Fun(fresh_name, r));;
+
+(*
 
 
 let apply_substitution x y = failwith "Not implemented";;
