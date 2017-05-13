@@ -17,7 +17,8 @@ let rec system_to_string x str = match x with
         system_to_string t str;;
 
 
-let print_system x = system_to_string x "";;
+let print_system x = print_string (system_to_string x "\n");;
+
 
 
 
@@ -35,10 +36,10 @@ let rec  get_name x str = match x with
         |(l,r)::t -> simple_name l (simple_name r (get_name t str));;  
 
 let get_fresh_name x = get_name x "fresh";;
-
+(*
 let s0 = [(Var "a", Var "b");(Var "a", Var "b")];;
 print_string(print_system s0);;
-
+*)
 (*----------------------PART | --------------------------*)
 
 let rec eq_helper x ll rr = match x with 
@@ -51,9 +52,9 @@ let system_to_equation x =
         (Fun(fresh_name, l), Fun(fresh_name, r));;
 let print_eq x str = print_system ( [x] )  
 let print_equation x = print_eq x "";;
-
+(*
 print_string(print_equation(system_to_equation s0));;
-
+*)
 (*----------------------PART || -------------------------*)
 
 module StringMap = Map.Make (String);;
@@ -86,11 +87,11 @@ let rec list_check_helper x y res = match y with
 
 let check_solution x y = list_check_helper x y true;;
 
-
+(*
 let at0 = Fun("f",[Fun("g",[Var "y"; Var "x"])]);;
 let s1 = [(Var "a", Var "b");(Var "x", Var "b")];;
 print_string(string_of_bool(check_solution ["a", Var"b"; "x", Var"z"] s1));;
-
+*)
 
 (*----------------------PART |V --------------------------*)
 
@@ -114,6 +115,9 @@ let rec system_subst subst x res = match x with
         |(l,r)::t -> system_subst subst t 
         (((apply_substitution subst l), (apply_substitution subst r))::res);; 
 
+let rec var_reduction system res = match system with
+        |[] -> List.rev res
+        |(Var l, r)::t -> var_reduction t ((l, r)::res);;
 
 let solve system l r set = match (l, r) with
         |(Var a, b) ->
@@ -126,7 +130,7 @@ let solve system l r set = match (l, r) with
                         
         |(a, Var b) -> ((List.append system [Var b, a]), set) 
         |(Fun(a,b), Fun(c,d)) -> 
-                if(a <> c) 
+                if (a <> c || List.length b <> List.length d) 
                         then raise (OOps ("no solution :("))
                 else 
                         (List.append system (make_solutions_list b d []), set);;
@@ -136,7 +140,7 @@ let solve_system x =
                 let rec solve_helper x set  = match x with
                          |[] -> x
                          |(l,r)::t ->
-                                if (type_to_string (l) = type_to_string (r))
+                                if (type_to_string (l) "" = type_to_string (r) "")
                                         then solve_helper t set
                                 else 
                                         let new_list, new_set = (solve t l r set) in
@@ -144,6 +148,38 @@ let solve_system x =
                                                 then new_list
                                         else 
                                                 solve_helper new_list new_set
-                in solve_helper x StringSet.empty
-        with _ -> [];;
+                in let result =  solve_helper x StringSet.empty
+                in print_string (system_to_string result "");
+                (Some (var_reduction result []))
+        with (OOps what)  -> (print_string (what ^"\n"));
+                None;;
+
+
+let at0 = Var "a";;
+let at1 = Var "b";;
+let at2 = Var "c";;
+let at3 = Var "d";;
+let at4 = Fun("f",[Var "x"]);;
+let at5 = Fun("f",[Fun("g",[Var "y"])]);;
+let at6 = Fun("h",[Var "p"]);;
+let at7 = Fun("f",[Var "a"; Var "b"]);;
+let at8 = Fun("f",[Var "x"; Var "y"]);;
+let at9 = Fun("f",[at5; at7]);;
+
+let sys0 = [(Var "a", Var "b"); (Var "c", Var "d")];;
+let sys1 = [(Fun("f",[Var "x"]), Fun("f",[Fun("g",[Var "y"])])); (Var "y", Fun("h",[Var "p"]))];;
+let sys2 = [(Fun("f",[Var "a"]), Var "b")];;
+let sys3 = [Fun("f",[Var "a"; Var "b"]), Fun("f",[Var "x"; Var "y"])];;
+
+let isys0 = [at4, at8];;
+let isys1 = [Fun("f",[Var "y"; Fun("h",[Var "x"; Var "y"])]), Fun("f",[Fun("g",[Var "a"; Var "b"]); Fun("h", [Var "x"; Var "x"])]); Fun("h",[Var "x"; Var "y"]), Fun("h", [Var "a"; Var "a"])];;
+
+print_system isys1;;
+solve_system isys1;;
+
+
+
+
+
+
 
