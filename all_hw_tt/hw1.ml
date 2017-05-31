@@ -69,10 +69,8 @@ let lambda_of_string s =
 
         let parse_ident_str()  =
                 let rec  rec_parse s =
-                        if (get() <> ' ' && get() <> '.' && get() <> ')' &&
-                        (get()) <> ';') 
-                        then
-                                let cur_dig = get() in next();
+                        if (get() <> ' ' && get() <> '.' && get() <> ')' && (get()) <> ';') 
+                        then let cur_dig = get() in next();
                         rec_parse  (s^ (String.make 1 (cur_dig))) else s in
                 rec_parse "" in
 
