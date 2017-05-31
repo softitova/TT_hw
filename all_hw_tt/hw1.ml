@@ -108,9 +108,9 @@ let string_of_lambda lambda =
         to_string lambda "";;
 
 (*------------------ REVERSE -----------------*)
-type 'a my_list =
+(* type 'a my_list =
     | Cons of ('a * 'a my_list)
-    | Nil
+    | Nil *)
 
 let rec rev_append l1 l2 = match l1 with
     | []   -> l2
