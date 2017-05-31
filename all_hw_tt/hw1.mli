@@ -18,11 +18,14 @@ type lambda = Var of string | Abs of string * lambda | App of lambda * lambda;;
 val string_of_lambda: lambda -> string
 val lambda_of_string: string -> lambda
 
+val rev: 'a list -> 'a list
+val merge_sort: 'a list -> 'a list
 
-type 'a my_list =
+
+(* type 'a my_list =
                 | Cons of ('a * 'a my_list)
                 | Nil
 
 
 val rev: 'a my_list -> 'a my_list
-val merge_sort: 'a my_list -> 'a my_list
+val merge_sort: 'a my_list -> 'a my_list *)

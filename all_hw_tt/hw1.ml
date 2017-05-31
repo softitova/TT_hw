@@ -1,4 +1,5 @@
 
+(*---------------- PEANO ---------------*)
 
 type peano = Z|S of peano;;
 
@@ -53,6 +54,8 @@ let dec p_n =
 		|_ -> sub(p_n)(S Z);;
 
 
+(*---------------- PARSERS ---------------*)
+
 type lambda = Var of string | Abs of string * lambda | App of lambda * lambda;;
 
 
@@ -71,15 +74,6 @@ let lambda_of_string s =
                         then
                                 let cur_dig = get() in next();
                         rec_parse  (s^ (String.make 1 (cur_dig))) else s in
-                        (*next();*)
-                       (* if ((get() >='0') && (get() <= '9')) then
-                                let cur_dig = get() in
-                                next();
-                                rec_parse  (s^ (String.make 1 (cur_dig)))
-                                else s in
-                let cur =  String.make 1 (get ()) in
-                next();
-                *)
                 rec_parse "" in
 
         let parse_ident() =
@@ -115,15 +109,42 @@ let string_of_lambda lambda =
                         | App (x, y) -> s^(to_string x "")^ " " ^(to_string y "") in
         to_string lambda "";;
 
-(*
-print_string (string_of_lambda (lambda_of_string "x y")); print_string "\n";;
-print_string (string_of_lambda (lambda_of_string "\\x.\\y.x y")); print_string
-"\n";;
-print_string (string_of_lambda (lambda_of_string "\\l.\\i.\\f.\\e.(l) (i) (f) (esgood)"));
-print_string "\n";;
-*)
-
+(*------------------ REVERSE -----------------*)
 type 'a my_list =
+    | Cons of ('a * 'a my_list)
+    | Nil
+
+let rec rev_append l1 l2 = match l1 with
+    | []   -> l2
+    | h::t-> rev_append t (h::l2);;
+     
+let rev l = rev_append l [];;
+
+
+(*---------------- MERGE SORT ---------------*)
+
+let rec merge x y = match (x, y) with 
+    |([], _) -> y
+    |(_, []) -> x
+    |(h1:: t1), (h2::t2) ->
+    if ((<) h1 h2)
+        then (h1::(merge t1 y))
+    else (h2::(merge x t2));;
+
+let rec split x y z = match x with
+    | []-> (y,z)
+    | x::other -> split (other) (z) (x::y);;
+        
+let rec merge_sort x = match x with
+    | ([] | (_::[])) -> x
+    | _ -> let (firstPart, secondPart) = split x [] [] in
+    (merge (merge_sort firstPart) (merge_sort secondPart));;
+
+
+let () = List.iter (printf "%d ") (merge_sort  [18;2;6;4;5]);;
+
+
+(* type 'a my_list =
     | Cons of ('a * 'a my_list)
     | Nil
 
@@ -163,5 +184,5 @@ let rec merge_sort x = match x with
         (merge (merge_sort firstPart) (merge_sort secondPart));;
 
 
-let m = merge_sort c;;
+let m = merge_sort c;; *)
 (* print_list m 0;;*)
