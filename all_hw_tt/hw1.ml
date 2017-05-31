@@ -104,7 +104,7 @@ let string_of_lambda lambda =
                 match lambda with
                         | Var (x) -> s ^"("^x^")"
                         | Abs (x, y) -> s^"(\\"^x^"."^(to_string y "")^")"
-                        | App (x, y) -> s^(to_string x "")^ " " ^(to_string y "") in
+                        | App (x, y) -> s^"("^(to_string x "")^ " " ^(to_string y "")^")" in
         to_string lambda "";;
 
 (*------------------ REVERSE -----------------*)
