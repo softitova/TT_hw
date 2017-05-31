@@ -1,4 +1,4 @@
-
+open Printf
 (*---------------- PEANO ---------------*)
 
 type peano = Z|S of peano;;
