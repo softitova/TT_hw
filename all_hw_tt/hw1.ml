@@ -1,4 +1,6 @@
 
+open Printf
+
 (*---------------- PEANO ---------------*)
 
 type peano = Z|S of peano;;
@@ -85,7 +87,18 @@ let lambda_of_string s =
                 Abs(v, l)
 
         and  parse res  =  if ((!pos =  String.length s - 1) || ')' = get())
-        then res else (eat ' '; App(res, parse_lambda()))
+        then res else (eat ' '; 
+            match (get()) with
+                '\\' -> let res1 = parse_abs() in
+                                parse (App(res, res1))
+                |'(' -> (eat '(';
+                        let res1 = parse_lambda() in
+                        eat ')';
+                        parse (App(res, res1)))
+                |_   ->  (let res1 = parse_ident() in
+                                parse (App(res, res1)))
+
+            )
         
         and parse_lambda() =
                 match (get()) with
@@ -102,10 +115,19 @@ let lambda_of_string s =
 let string_of_lambda lambda =
         let rec to_string lambda s =
                 match lambda with
-                        | Var (x) -> s ^"("^x^")"
+                        | Var (x) -> s ^x
                         | Abs (x, y) -> s^"(\\"^x^"."^(to_string y "")^")"
-                        | App (x, y) -> s^(to_string x "")^ " " ^(to_string y "") in
+                        | App (x, y) -> s^"("^(to_string x "")^ " " ^(to_string y "")^")" in
         to_string lambda "";;
+
+
+        print_string(string_of_lambda(lambda_of_string"x y z"));;
+(* print_string(string_of_lambda(lambda_of_string"\\x.x (y z)"));; *)
+(* print_string(string_of_lambda(lambda_of_string"\\x.x y z"));;
+print_string("\n");;
+print_string(string_of_lambda(lambda_of_string"\\x.(x y) z"));; *)
+
+
 
 (*------------------ REVERSE -----------------*)
 (* type 'a my_list =
@@ -114,7 +136,7 @@ let string_of_lambda lambda =
 
 let rec rev_append l1 l2 = match l1 with
     | []   -> l2
-    | h::t-> rev_append t (h::l2);;
+    | h::t -> rev_append t (h::l2);;
      
 let rev l = rev_append l [];;
 
