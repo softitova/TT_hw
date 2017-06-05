@@ -80,8 +80,11 @@ infer_simp_type(Hw1.lambda_of_string("\\x.x"));
 let None  = infer_simp_type (Hw1.lambda_of_string "\\x.x x");;
 *)
 
+(*---------------- Algorithm W -----------------*)
 
-type hm_lambda = HM_Var of string | HM_Abs of string * lambda | HM_App of lambda * lambda | HM_Let of string * lambda * lambda
+
+type hm_lambda = HM_Var of string | HM_Abs of string * hm_lambda | HM_App of
+hm_lambda * hm_lambda | HM_Let of string * hm_lambda * hm_lambda
 type hm_type = HM_Elem of string | HM_Arrow of hm_type * hm_type | HM_ForAll of string * hm_type
 
 
@@ -119,9 +122,106 @@ let pm m =
 let print_set s =
         StringSet.iter (fun s -> (print_string (s ^ "\n"))) s;;
 
+(* y will not  pass *)
 print_string "\n";;
 
-let t1 = HM_ForAll ("alpha", HM_Arrow(HM_Elem("alpha"), HM_Elem("betha")));;
+
+
+let closure hmt ctx = 
+        let fctx = free_vars_context ctx in
+        let diff = StringSet.fold (fun k set -> if StringSet.mem k fctx then set
+                        else StringSet.add k set) (free_vars_hmt hmt)
+                        StringSet.empty in
+        StringSet.fold (fun k t -> HM_ForAll(k, t)) diff hmt;;
+
+let rec hta hmt =
+        match hmt with
+                |HM_Elem v -> Hw2_unify.Var v
+                |HM_Arrow(hmt1, hmt2) -> Hw2_unify.Fun ("impl", [hta hmt1; hta hmt2])
+                |_ -> failwith ("never happens, 'cause according to Artem quantifiers can't be met here");;
+
+(* no documentation herre *)
+let sath sat =
+        let rec ath a =
+                match a with 
+                        |Hw2_unify.Var v -> HM_Elem v
+                        |Hw2_unify.Fun ("impl", [a; b]) -> HM_Arrow (ath a, ath b) 
+                        |_ -> failwith "no warining pls" in
+        List.fold_left (fun map (v, t) -> StringMap.add v (ath t) map) StringMap.empty sat ;;
+
+(*
+let Some res = Hw2_unify.solve_system [hta t2, hta t3];;
+*)
+
+(* make substitution ie s is subst, t is type to make subst to *)
+(*      subst is a map *)
+let ms s t =
+        let rec h tfs blocked =
+                match tfs with 
+                        |HM_Elem v -> if StringSet.mem v blocked then tfs
+                                else 
+                                        if StringMap.mem v s 
+                                                then StringMap.find v s 
+                                                else tfs 
+                        |HM_Arrow (h1, h2) -> HM_Arrow(h h1 blocked, h h2 blocked)
+                        |HM_ForAll (v, h1) -> HM_ForAll(v, h h1 (StringSet.add
+                        v blocked)) in 
+        h t StringSet.empty;;
+
+
+
+let merge_subst s2 s1 =
+        StringMap.fold (fun k v map -> if StringMap.mem k map then map else StringMap.add k v map) s2 
+        (StringMap.fold (fun k v map -> StringMap.add k (ms s2 v) map) s1 StringMap.empty);; 
+
+(* returns type with no quantifiers *)
+let dwrp t =
+        let rec hepler t =
+                match t with
+                        |HM_ForAll(v, lhs) -> ( ms (StringMap.singleton v (HM_Elem(name_generator ()))) (hepler lhs))
+                        |_ -> t in
+        hepler t;;
+
+(*subst to context*)
+let stc subst ctxt = StringMap.fold (fun k v map -> (StringMap.add k (ms subst v) map)) ctxt StringMap.empty;;
+
+let rec wepler ctx l = match l with
+        |HM_Var v -> (StringMap.empty, dwrp (StringMap.find v ctx))
+        |HM_App (x, y) -> 
+                        (let s1, t1 = wepler ctx x in
+                        let s2, t2 = wepler (stc s1 ctx) y in
+                        let fresh = name_generator () in
+                        let res = Hw2_unify.solve_system [hta (ms s2 t1), hta
+                        (HM_Arrow(t2, HM_Elem (fresh)))] in
+                        match res with 
+                                |None -> failwith "Robinson fault is not an error" 
+                                |Some r -> (
+                                        let rob_subst = sath r in
+                                        let merged = merge_subst rob_subst (merge_subst s2 s1) in
+                                        (merged, ms merged (HM_Elem fresh))))
+        |HM_Abs (x, y) -> 
+                        (let fresh = name_generator () in
+                        let stmp = StringMap.remove x ctx in
+                        let stmp = StringMap.add x (HM_Elem(fresh)) stmp in
+                        let s1, t1 = wepler stmp y in
+                        (s1, HM_Arrow((ms s1 (HM_Elem(fresh))), t1)))
+        |HM_Let (x, h1, h2) ->
+                        (let s1, t1 = wepler ctx h1 in
+                        let sctx = stc s1 ctx in
+                        let nctx = StringMap.remove x sctx in
+                        let nctx = StringMap.add x (closure t1 sctx) nctx in
+                        let s2, t2 = wepler nctx h2 in
+                        (merge_subst s2 s1, t2));;
+
+
+let algorithm_w l = 
+        let s, t = wepler StringMap.empty l in
+        Some ((StringMap.bindings s), t);;
+
+let hml = HM_Abs("x", HM_Var("x"));;
+
+
+let t1 = HM_ForAll ("alpha", HM_Arrow(HM_Elem("alpha"), HM_Elem("beta")));;
 let t2 = HM_Arrow(HM_Elem("theta"), HM_Elem("gamma"));;
 let t3 = HM_Arrow(HM_Elem("alpha"), HM_Elem("betha"));;
 
@@ -129,65 +229,24 @@ let cxt1 = StringMap.empty;;
 let cxt1 = StringMap.add "a" t1 cxt1;;
 let cxt1 = StringMap.add "b" t2 cxt1;;
 
-let closure hmt ctx = 
-        let fctx = free_vars_context ctx in
-        StringSet.fold (fun k set -> if StringSet.mem k fctx then set else StringSet.add k set) (free_vars_hmt hmt) StringSet.empty;;
-
-let rec hta hmt =
-        match hmt with
-                | HM_Elem v -> Hw2_unify.Var v
-                | HM_Arrow(hmt1, hmt2) -> Hw2_unify.Fun ("impl", [hta hmt1; hta hmt2])
-                | _ -> failwith ("never happens, 'cause according to Artem quantifiers can't be met here");;
-
-(* no documentation herre *)
-let sath sat =
-        let rec ath a =
-                match a with 
-                        | Hw2_unify.Var v -> HM_Elem v
-                        | Hw2_unify.Fun ("impl", [a; b]) -> HM_Arrow (ath a, ath b) 
-                        | _ -> failwith "no warining pls" in
-        List.fold_left (fun map (v, t) -> StringMap.add v (ath t) map) StringMap.empty sat ;;
-
-(*
-let Some res = Hw2_unify.solve_system [hta t2, hta t3];;
-*)
-
-let ms s t =
-        let rec h tfs blocked =
-                match tfs with 
-                        | HM_Elem v -> if StringSet.mem v blocked then tfs
-                                else 
-                                        if StringMap.mem v s 
-                                                then StringMap.find v s 
-                                                else tfs 
-                        | HM_Arrow (h1, h2) -> HM_Arrow(h h1 blocked, h h2 blocked)
-                        | HM_ForAll (v, h1) -> h h1 (StringSet.add v blocked) in 
-        h t StringSet.empty;;
-
 let subst1 = StringMap.empty;;
-let subst1 = StringMap.add "a" (HM_Elem "v") subst1;;
-let subst1 = StringMap.add "b" (HM_Elem "u") subst1;;
+let subst1 = StringMap.add "alpha" (HM_Elem "v") subst1;;
+let subst1 = StringMap.add "gamma" (HM_Elem "u") subst1;;
 
 let subst2 = StringMap.empty;;
 let subst2 = StringMap.add "u" (HM_Elem "z") subst2;;
 let subst2 = StringMap.add "b" (HM_Elem "x") subst2;;
 
-let merge_subst s2 s1 =
-        StringMap.fold (fun k v map -> if StringMap.mem k map then map else StringMap.add k v map) s2 
-        (StringMap.fold (fun k v map -> StringMap.add k (ms s2 v) map) s1 StringMap.empty);; 
+let testik = HM_Let("id", HM_Abs("x", HM_Var("x")), HM_Abs("x", HM_App(HM_Var("id"), HM_Var("x"))));;
 
-pm (merge_subst subst2 subst1);;
-
-let algorithm_w l = failwith "not implemented";;
+let pl l =
+        List.iter (fun (v, t) -> print_string ("[ " ^ v ^ " " ^ (string_of_hmt t) ^ " ]")) l;;
 
 
-
-
-
-
-
-
-
+let Some (trash, t) = algorithm_w testik;;
+print_string "\n";;
+ps (string_of_hmt t);;
+pl trash;;
 
 
 
