@@ -88,66 +88,52 @@ hm_lambda * hm_lambda | HM_Let of string * hm_lambda * hm_lambda
 type hm_type = HM_Elem of string | HM_Arrow of hm_type * hm_type | HM_ForAll of string * hm_type
 
 
-let ps s =
-        print_string (s ^ "\n");;
+let ps s = print_string (s ^ "\n");;
 
-let string_of_hmt hmt =
-        let rec impl hmt = 
-                match hmt with
+let rec string_of_hmt hmt = match hmt with
                         |HM_Elem v -> v
-                        |HM_Arrow(hmt1, hmt2) -> (impl hmt1) ^ " -> " ^ (impl hmt2) 
-                        |HM_ForAll(v, hmt) -> "∀" ^ v ^ "." ^ (impl hmt) in
-        impl hmt;;
+                        |HM_Arrow(hmt1, hmt2) -> (string_of_hmt hmt1) ^ " -> " ^ (string_of_hmt hmt2) 
+                        |HM_ForAll(v, hmt) -> "∀" ^ v ^ "." ^ (string_of_hmt hmt);;
 
 module StringSet = Set.Make (String) 
 module StringMap = Map.Make (String) 
 
 let free_vars_hmt hmt = 
-        let rec hepler hmt blocked = match hmt with
+        let rec helper hmt blocked = match hmt with
                 |HM_Elem v ->
                         if StringSet.mem v blocked 
                                 then StringSet.empty
                                 else StringSet.singleton v
-                |HM_Arrow (hmt1, hmt2) -> StringSet.union (hepler hmt1 blocked) (hepler hmt2 blocked)        
-                |HM_ForAll(v, x) -> hepler x (StringSet.add v blocked) in
-        hepler hmt StringSet.empty;;
+                |HM_Arrow (hmt1, hmt2) -> StringSet.union (helper hmt1 blocked) (hepler hmt2 blocked)        
+                |HM_ForAll(v, x) -> helper x (StringSet.add v blocked) in
+        helper hmt StringSet.empty;;
 
-let free_vars_context cxt = 
-        StringMap.fold (fun k v set -> StringSet.union (free_vars_hmt v) set) cxt StringSet.empty;;
+let free_vars_context cxt = StringMap.fold (fun k v set -> StringSet.union (free_vars_hmt v) set) cxt StringSet.empty;;
 
-let pm m = 
-        StringMap.iter (fun k v -> (print_string ("{" ^ k ^ " " ^
-        (string_of_hmt v) ^ "}\n"))) m;;
+let pm m = StringMap.iter (fun k v -> (print_string ("{" ^ k ^ " " ^ (string_of_hmt v) ^ "}\n"))) m;;
 
-let print_set s =
-        StringSet.iter (fun s -> (print_string (s ^ "\n"))) s;;
+let print_set s = StringSet.iter (fun s -> (print_string (s ^ "\n"))) s;;
 
 (* y will not  pass *)
 print_string "\n";;
 
 
 
-let closure hmt ctx = 
-        let fctx = free_vars_context ctx in
-        let diff = StringSet.fold (fun k set -> if StringSet.mem k fctx then set
-                        else StringSet.add k set) (free_vars_hmt hmt)
-                        StringSet.empty in
-        StringSet.fold (fun k t -> HM_ForAll(k, t)) diff hmt;;
+let closure hmt ctx = StringSet.fold (fun k t -> HM_ForAll(k, t))
+        (StringSet.fold (fun k set -> if StringSet.mem k (free_vars_context ctx) then set 
+        else StringSet.add k set) (free_vars_hmt hmt) StringSet.empty) hmt;;
 
-let rec hta hmt =
-        match hmt with
+let rec hta hmt = match hmt with
                 |HM_Elem v -> Hw2_unify.Var v
                 |HM_Arrow(hmt1, hmt2) -> Hw2_unify.Fun ("impl", [hta hmt1; hta hmt2])
                 |_ -> failwith ("never happens, 'cause according to Artem quantifiers can't be met here");;
 
-(* no documentation herre *)
-let sath sat =
-        let rec ath a =
-                match a with 
+(* no documentation here *)
+let sath sat = let rec ath a = match a with 
                         |Hw2_unify.Var v -> HM_Elem v
                         |Hw2_unify.Fun ("impl", [a; b]) -> HM_Arrow (ath a, ath b) 
-                        |_ -> failwith "no warining pls" in
-        List.fold_left (fun map (v, t) -> StringMap.add v (ath t) map) StringMap.empty sat ;;
+                        |_ -> failwith "no warnings pls" in
+        List.fold_left (fun map (v, t) -> StringMap.add v (ath t) map) StringMap.empty sat;;
 
 (*
 let Some res = Hw2_unify.solve_system [hta t2, hta t3];;
@@ -156,8 +142,7 @@ let Some res = Hw2_unify.solve_system [hta t2, hta t3];;
 (* make substitution ie s is subst, t is type to make subst to *)
 (*      subst is a map *)
 let ms s t =
-        let rec h tfs blocked =
-                match tfs with 
+        let rec h tfs blocked = match tfs with 
                         |HM_Elem v -> if StringSet.mem v blocked then tfs
                                 else 
                                         if StringMap.mem v s 
@@ -170,17 +155,13 @@ let ms s t =
 
 
 
-let merge_subst s2 s1 =
-        StringMap.fold (fun k v map -> if StringMap.mem k map then map else StringMap.add k v map) s2 
+let merge_subst s2 s1 = StringMap.fold (fun k v map -> if StringMap.mem k map then map else StringMap.add k v map) s2 
         (StringMap.fold (fun k v map -> StringMap.add k (ms s2 v) map) s1 StringMap.empty);; 
 
 (* returns type with no quantifiers *)
-let dwrp t =
-        let rec hepler t =
-                match t with
-                        |HM_ForAll(v, lhs) -> ( ms (StringMap.singleton v (HM_Elem(name_generator ()))) (hepler lhs))
-                        |_ -> t in
-        hepler t;;
+let rec dwrp t = match t with
+        |HM_ForAll(v, lhs) -> ( ms (StringMap.singleton v (HM_Elem(name_generator ()))) (dwrp lhs))
+        |_ -> t;;
 
 (*subst to context*)
 let stc subst ctxt = StringMap.fold (fun k v map -> (StringMap.add k (ms subst v) map)) ctxt StringMap.empty;;
