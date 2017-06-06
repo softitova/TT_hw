@@ -24,47 +24,43 @@ let rec stat x = match x with
         |S_Elem a -> Hw2_unify.Var a
         |S_Arrow (a, b) -> (Hw2_unify.Fun ("impl", [stat a; stat b]));;
 
-let stas sys = 
-        List.map (fun(a, b) -> (stat a, stat b)) sys;;
+let stas sys = List.map (fun(a, b) -> (stat a, stat b)) sys;;
 
 let [@warning "-8"] rec atst x = match x with 
         |Hw2_unify.Var a -> S_Elem a
         |(Hw2_unify.Fun (a, [b; c])) -> S_Arrow (atst b, atst c);;
 
 
-let atss sys = 
-        List.map (fun(a, b) -> (atst a, atst b)) sys;;
+let atss sys = List.map (fun(a, b) -> (atst a, atst b)) sys;;
 
-let sas_to_sss sys = 
-        List.map (fun(a, b) -> (a, atst b)) sys;;
+let sas_to_sss sys = List.map (fun(a, b) -> (a, atst b)) sys;;
 
 
 let list_to_map l =
-        let rec helper l map = match l with
+        let rec h123 l map = match l with
                 |[] -> map
-                |h::t -> helper t (Mmap.add h (S_Elem(name_generator())) map) in
-        helper l Mmap.empty;;
+                |h::t -> h123 t (Mmap.add h (S_Elem(name_generator())) map) in
+        h123 l Mmap.empty;;
         
         
-let rec in_simp_helper xx map = match xx with
-        |Var(x)    -> 
-                        ([], Mmap.find x map)
+let rec in_simp_h123 xx map = match xx with
+        |Var(x)    ->   ([], Mmap.find x map)
         |App(x, y) ->
-                        let sys1, type_t1 = in_simp_helper x map in
-                        let sys2, type_t2 = in_simp_helper y map in
+                        let sys1, type_t1 = in_simp_h123 x map in
+                        let sys2, type_t2 = in_simp_h123 y map in
                         let tt = S_Elem(name_generator()) in
                         ((List.append sys1
                                 (List.append sys2
                                         [(type_t1, S_Arrow (type_t2, tt))])), tt) 
         |Abs(x, y) -> 
                         let t = (Mmap.add x (S_Elem(name_generator())) map) in
-                        let sys1, type_t1 = in_simp_helper y t in
+                        let sys1, type_t1 = in_simp_h123 y t in
                         (sys1, S_Arrow(Mmap.find x t, type_t1));;
 
 
 
 let infer_simp_type x = 
-        let sys, type_t =  in_simp_helper x (list_to_map
+        let sys, type_t = in_simp_h123 x (list_to_map
         (Hw1_reduction.free_vars x)) in
         match (Hw2_unify.solve_system (stas sys)) with  
                 |None -> None
@@ -90,6 +86,15 @@ type hm_type = HM_Elem of string | HM_Arrow of hm_type * hm_type | HM_ForAll of 
 
 let ps s = print_string (s ^ "\n");;
 
+
+let rec string_of_hml hml =
+	match hml with 
+		HM_Var v -> v
+		| HM_Abs(v, hml) -> ("\\" ^ v ^ "." ^ "(" ^ (string_of_hml hml) ^ ")")
+		| HM_App(hml1, hml2) -> ("(" ^ (string_of_hml hml1) ^ " " ^ (string_of_hml hml2) ^ ")")
+		| HM_Let(v, hml1, hml2) -> ("let " ^ v ^ " = (" ^ (string_of_hml hml1) ^ ") in (" ^ (string_of_hml hml2)) ^ ")";;
+
+
 let rec string_of_hmt hmt = match hmt with
                         |HM_Elem v -> v
                         |HM_Arrow(hmt1, hmt2) -> (string_of_hmt hmt1) ^ " -> " ^ (string_of_hmt hmt2) 
@@ -99,14 +104,11 @@ module StringSet = Set.Make (String)
 module StringMap = Map.Make (String) 
 
 let free_vars_hmt hmt = 
-        let rec helper hmt blocked = match hmt with
-                |HM_Elem v ->
-                        if StringSet.mem v blocked 
-                                then StringSet.empty
-                                else StringSet.singleton v
-                |HM_Arrow (hmt1, hmt2) -> StringSet.union (helper hmt1 blocked) (hepler hmt2 blocked)        
-                |HM_ForAll(v, x) -> helper x (StringSet.add v blocked) in
-        helper hmt StringSet.empty;;
+        let rec h123 hmt blocked1 = match hmt with
+                |HM_Elem v -> if StringSet.mem v blocked1 then StringSet.empty else StringSet.singleton v
+                |HM_Arrow (hmt1, hmt2) -> StringSet.union (h123 hmt1 blocked1) (h123 hmt2 blocked1)        
+                |HM_ForAll(v, x) -> h123 x (StringSet.add v blocked1) in
+        h123 hmt StringSet.empty;;
 
 let free_vars_context cxt = StringMap.fold (fun k v set -> StringSet.union (free_vars_hmt v) set) cxt StringSet.empty;;
 
@@ -116,8 +118,6 @@ let print_set s = StringSet.iter (fun s -> (print_string (s ^ "\n"))) s;;
 
 (* y will not  pass *)
 print_string "\n";;
-
-
 
 let closure hmt ctx = StringSet.fold (fun k t -> HM_ForAll(k, t))
         (StringSet.fold (fun k set -> if StringSet.mem k (free_vars_context ctx) then set 
@@ -142,15 +142,12 @@ let Some res = Hw2_unify.solve_system [hta t2, hta t3];;
 (* make substitution ie s is subst, t is type to make subst to *)
 (*      subst is a map *)
 let ms s t =
-        let rec h tfs blocked = match tfs with 
-                        |HM_Elem v -> if StringSet.mem v blocked then tfs
-                                else 
-                                        if StringMap.mem v s 
-                                                then StringMap.find v s 
-                                                else tfs 
-                        |HM_Arrow (h1, h2) -> HM_Arrow(h h1 blocked, h h2 blocked)
+        let rec h tfs blocked1 = match tfs with 
+                        |HM_Elem v -> if StringSet.mem v blocked1 then tfs
+                                else if StringMap.mem v s then StringMap.find v s else tfs 
+                        |HM_Arrow (h1, h2) -> HM_Arrow(h h1 blocked1, h h2 blocked1)
                         |HM_ForAll (v, h1) -> HM_ForAll(v, h h1 (StringSet.add
-                        v blocked)) in 
+                        v blocked1)) in 
         h t StringSet.empty;;
 
 
@@ -166,6 +163,9 @@ let rec dwrp t = match t with
 (*subst to context*)
 let stc subst ctxt = StringMap.fold (fun k v map -> (StringMap.add k (ms subst v) map)) ctxt StringMap.empty;;
 
+exception W_Fail of string;;
+
+
 let rec wepler ctx l = match l with
         |HM_Var v -> (StringMap.empty, dwrp (StringMap.find v ctx))
         |HM_App (x, y) -> 
@@ -175,7 +175,9 @@ let rec wepler ctx l = match l with
                         let res = Hw2_unify.solve_system [hta (ms s2 t1), hta
                         (HM_Arrow(t2, HM_Elem (fresh)))] in
                         match res with 
-                                |None -> failwith "Robinson fault is not an error" 
+                                |None -> raise (W_Fail ("no solution :("))
+                                (*failwith "Robinson fault bbbis not an
+                                error" *)
                                 |Some r -> (
                                         let rob_subst = sath r in
                                         let merged = merge_subst rob_subst (merge_subst s2 s1) in
@@ -196,8 +198,12 @@ let rec wepler ctx l = match l with
 
 
 let algorithm_w l = 
-        let s, t = wepler StringMap.empty l in
-        Some ((StringMap.bindings s), t);;
+        try 
+                let s, t = wepler StringMap.empty l in
+                Some ((StringMap.bindings s), t)
+        with (W_Fail what)  -> 
+                (print_string (what ^"\n")); None;;
+
 
 let hml = HM_Abs("x", HM_Var("x"));;
 
@@ -223,11 +229,12 @@ let testik = HM_Let("id", HM_Abs("x", HM_Var("x")), HM_Abs("x", HM_App(HM_Var("i
 let pl l =
         List.iter (fun (v, t) -> print_string ("[ " ^ v ^ " " ^ (string_of_hmt t) ^ " ]")) l;;
 
+let res t  =  match (algorithm_w t) with
+        |Some (trash, t) -> 
+                print_string "\n";
+                ps (string_of_hmt t)
+        |_-> print_string("No solution\n");;
 
-let Some (trash, t) = algorithm_w testik;;
-print_string "\n";;
-ps (string_of_hmt t);;
-pl trash;;
 
 
-
+res testik;;
