@@ -10,25 +10,24 @@ let name_generator () =
         counter := !counter + 1; ret;;
 
 
-let st_to_string st = 
-	let rec impl st str = 
-		match st with 
-			S_Elem v -> str ^ v
-			| S_Arrow (x, y) -> str ^ (impl x "") ^ " -> " ^ (impl y "") in
-	impl st "";;
+let rec st_to_string st = 
+        match st with 
+                S_Elem v -> v
+                | S_Arrow (x, y) -> "(" ^ (st_to_string x) ^ " -> " ^
+                (st_to_string y) ^ ")";;
 
 
 module Mmap = Map.Make (String);;
 
 let rec stat x = match x with
         |S_Elem a -> Hw2_unify.Var a
-        |S_Arrow (a, b) -> (Hw2_unify.Fun ("impl", [stat a; stat b]));;
+        |S_Arrow (a, b) -> Hw2_unify.Fun ("impl", [stat a; stat b]);;
 
 let stas sys = List.map (fun(a, b) -> (stat a, stat b)) sys;;
 
 let [@warning "-8"] rec atst x = match x with 
         |Hw2_unify.Var a -> S_Elem a
-        |(Hw2_unify.Fun (a, [b; c])) -> S_Arrow (atst b, atst c);;
+        |Hw2_unify.Fun (a, [b; c]) -> S_Arrow (atst b, atst c);;
 
 
 let atss sys = List.map (fun(a, b) -> (atst a, atst b)) sys;;
@@ -67,15 +66,9 @@ let infer_simp_type x =
                 |Some a -> Some (sas_to_sss a, atst
                 (Hw2_unify.apply_substitution a (stat type_t)));;
 
-(*
-infer_simp_type(Hw1.lambda_of_string("\\x.x"));
-*)
 
-
-(*
-let None  = infer_simp_type (Hw1.lambda_of_string "\\x.x x");;
-*)
-
+let Some(a, b) = infer_simp_type(Hw1.lambda_of_string("\\f.\\x.f (f x)"));;
+print_string (st_to_string b);;
 (*---------------- Algorithm W -----------------*)
 
 
@@ -89,15 +82,15 @@ let ps s = print_string (s ^ "\n");;
 
 let rec string_of_hml hml =
 	match hml with 
-		HM_Var v -> v
-		| HM_Abs(v, hml) -> ("\\" ^ v ^ "." ^ "(" ^ (string_of_hml hml) ^ ")")
-		| HM_App(hml1, hml2) -> ("(" ^ (string_of_hml hml1) ^ " " ^ (string_of_hml hml2) ^ ")")
-		| HM_Let(v, hml1, hml2) -> ("let " ^ v ^ " = (" ^ (string_of_hml hml1) ^ ") in (" ^ (string_of_hml hml2)) ^ ")";;
+                |HM_Var v -> v
+		|HM_Abs(v, hml) -> ("\\" ^ v ^ "." ^ "(" ^ (string_of_hml hml) ^ ")")
+		|HM_App(hml1, hml2) -> ("(" ^ (string_of_hml hml1) ^ " " ^ (string_of_hml hml2) ^ ")")
+		|HM_Let(v, hml1, hml2) -> ("let " ^ v ^ " = (" ^ (string_of_hml hml1) ^ ") in (" ^ (string_of_hml hml2)) ^ ")";;
 
 
 let rec string_of_hmt hmt = match hmt with
                         |HM_Elem v -> v
-                        |HM_Arrow(hmt1, hmt2) -> (string_of_hmt hmt1) ^ " -> " ^ (string_of_hmt hmt2) 
+                        |HM_Arrow(hmt1, hmt2) -> "(" ^ (string_of_hmt hmt1) ^ " -> " ^ (string_of_hmt hmt2) ^ ")" 
                         |HM_ForAll(v, hmt) -> "∀" ^ v ^ "." ^ (string_of_hmt hmt);;
 
 module StringSet = Set.Make (String) 
@@ -109,6 +102,15 @@ let free_vars_hmt hmt =
                 |HM_Arrow (hmt1, hmt2) -> StringSet.union (h123 hmt1 blocked1) (h123 hmt2 blocked1)        
                 |HM_ForAll(v, x) -> h123 x (StringSet.add v blocked1) in
         h123 hmt StringSet.empty;;
+
+let free_vars_hml hml =
+		let rec impl hml blocked3 =
+			match hml with
+                                |HM_Var v -> if StringSet.mem v blocked3 then StringSet.empty else StringSet.singleton v
+				|HM_Abs(v, hml1) -> impl hml1 (StringSet.add v blocked3)
+				|HM_Let(v, hml1, hml2) -> StringSet.union (impl hml1 blocked3) (impl hml2 (StringSet.add v blocked3))
+				|HM_App(hml1, hml2) -> StringSet.union (impl hml1 blocked3) (impl hml2 blocked3) in 
+		impl hml StringSet.empty;;
 
 let free_vars_context cxt = StringMap.fold (fun k v set -> StringSet.union (free_vars_hmt v) set) cxt StringSet.empty;;
 
@@ -135,22 +137,14 @@ let sath sat = let rec ath a = match a with
                         |_ -> failwith "no warnings pls" in
         List.fold_left (fun map (v, t) -> StringMap.add v (ath t) map) StringMap.empty sat;;
 
-(*
-let Some res = Hw2_unify.solve_system [hta t2, hta t3];;
-*)
-
 (* make substitution ie s is subst, t is type to make subst to *)
-(*      subst is a map *)
 let ms s t =
         let rec h tfs blocked1 = match tfs with 
-                        |HM_Elem v -> if StringSet.mem v blocked1 then tfs
-                                else if StringMap.mem v s then StringMap.find v s else tfs 
+                        |HM_Elem v -> if StringSet.mem v blocked1 then tfs else if StringMap.mem v s then StringMap.find v s else tfs 
                         |HM_Arrow (h1, h2) -> HM_Arrow(h h1 blocked1, h h2 blocked1)
                         |HM_ForAll (v, h1) -> HM_ForAll(v, h h1 (StringSet.add
                         v blocked1)) in 
         h t StringSet.empty;;
-
-
 
 let merge_subst s2 s1 = StringMap.fold (fun k v map -> if StringMap.mem k map then map else StringMap.add k v map) s2 
         (StringMap.fold (fun k v map -> StringMap.add k (ms s2 v) map) s1 StringMap.empty);; 
@@ -172,36 +166,27 @@ let rec wepler ctx l = match l with
                         (let s1, t1 = wepler ctx x in
                         let s2, t2 = wepler (stc s1 ctx) y in
                         let fresh = name_generator () in
-                        let res = Hw2_unify.solve_system [hta (ms s2 t1), hta
-                        (HM_Arrow(t2, HM_Elem (fresh)))] in
-                        match res with 
+                        match Hw2_unify.solve_system [hta (ms s2 t1), hta (HM_Arrow(t2, HM_Elem (fresh)))] with 
                                 |None -> raise (W_Fail ("no solution :("))
-                                (*failwith "Robinson fault bbbis not an
-                                error" *)
-                                |Some r -> (
-                                        let rob_subst = sath r in
-                                        let merged = merge_subst rob_subst (merge_subst s2 s1) in
+                                |Some r -> (let merged = merge_subst (sath r) (merge_subst s2 s1) in
                                         (merged, ms merged (HM_Elem fresh))))
         |HM_Abs (x, y) -> 
-                        (let fresh = name_generator () in
-                        let stmp = StringMap.remove x ctx in
-                        let stmp = StringMap.add x (HM_Elem(fresh)) stmp in
-                        let s1, t1 = wepler stmp y in
-                        (s1, HM_Arrow((ms s1 (HM_Elem(fresh))), t1)))
+                        let fresh = name_generator () in
+                        let s1, t1 = wepler (StringMap.add x (HM_Elem(fresh)) (StringMap.remove x ctx)) y in
+                        (s1, HM_Arrow((ms s1 (HM_Elem(fresh))), t1))
         |HM_Let (x, h1, h2) ->
-                        (let s1, t1 = wepler ctx h1 in
+                        let s1, t1 = wepler ctx h1 in
                         let sctx = stc s1 ctx in
-                        let nctx = StringMap.remove x sctx in
-                        let nctx = StringMap.add x (closure t1 sctx) nctx in
-                        let s2, t2 = wepler nctx h2 in
-                        (merge_subst s2 s1, t2));;
+                        let s2, t2 = wepler (StringMap.add x (closure t1 sctx) (StringMap.remove x sctx)) h2 in
+                        (merge_subst s2 s1, t2);;
 
 
 let algorithm_w l = 
         try 
-                let s, t = wepler StringMap.empty l in
+                let s, t = wepler (StringSet.fold (fun var map -> 
+                        StringMap.add var (HM_Elem(name_generator())) map) (free_vars_hml l) StringMap.empty) l in
                 Some ((StringMap.bindings s), t)
-        with (W_Fail what)  -> 
+        with (W_Fail what) -> 
                 (print_string (what ^"\n")); None;;
 
 
@@ -221,13 +206,13 @@ let subst1 = StringMap.add "alpha" (HM_Elem "v") subst1;;
 let subst1 = StringMap.add "gamma" (HM_Elem "u") subst1;;
 
 let subst2 = StringMap.empty;;
-let subst2 = StringMap.add "u" (HM_Elem "z") subst2;;
-let subst2 = StringMap.add "b" (HM_Elem "x") subst2;;
+let subst2 = StringMap.add "b" (HM_Elem "x") (StringMap.add "u" (HM_Elem "z") subst2);;
+
 
 let testik = HM_Let("id", HM_Abs("x", HM_Var("x")), HM_Abs("x", HM_App(HM_Var("id"), HM_Var("x"))));;
 
-let pl l =
-        List.iter (fun (v, t) -> print_string ("[ " ^ v ^ " " ^ (string_of_hmt t) ^ " ]")) l;;
+let pl l = List.iter (fun (v, t) -> print_string ("[ " ^ v ^ " " ^ (string_of_hmt t) ^ " ]")) l;;
+
 
 let res t  =  match (algorithm_w t) with
         |Some (trash, t) -> 
@@ -237,4 +222,4 @@ let res t  =  match (algorithm_w t) with
 
 
 
-res testik;;
+(*res testik;;*)
