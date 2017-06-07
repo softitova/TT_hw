@@ -69,6 +69,10 @@ let infer_simp_type x =
 
 let Some(a, b) = infer_simp_type(Hw1.lambda_of_string("\\f.\\x.f (f x)"));;
 print_string (st_to_string b);;
+
+
+
+
 (*---------------- Algorithm W -----------------*)
 
 
@@ -188,38 +192,3 @@ let algorithm_w l =
                 Some ((StringMap.bindings s), t)
         with (W_Fail what) -> 
                 (print_string (what ^"\n")); None;;
-
-
-let hml = HM_Abs("x", HM_Var("x"));;
-
-
-let t1 = HM_ForAll ("alpha", HM_Arrow(HM_Elem("alpha"), HM_Elem("beta")));;
-let t2 = HM_Arrow(HM_Elem("theta"), HM_Elem("gamma"));;
-let t3 = HM_Arrow(HM_Elem("alpha"), HM_Elem("betha"));;
-
-let cxt1 = StringMap.empty;;
-let cxt1 = StringMap.add "a" t1 cxt1;;
-let cxt1 = StringMap.add "b" t2 cxt1;;
-
-let subst1 = StringMap.empty;;
-let subst1 = StringMap.add "alpha" (HM_Elem "v") subst1;;
-let subst1 = StringMap.add "gamma" (HM_Elem "u") subst1;;
-
-let subst2 = StringMap.empty;;
-let subst2 = StringMap.add "b" (HM_Elem "x") (StringMap.add "u" (HM_Elem "z") subst2);;
-
-
-let testik = HM_Let("id", HM_Abs("x", HM_Var("x")), HM_Abs("x", HM_App(HM_Var("id"), HM_Var("x"))));;
-
-let pl l = List.iter (fun (v, t) -> print_string ("[ " ^ v ^ " " ^ (string_of_hmt t) ^ " ]")) l;;
-
-
-let res t  =  match (algorithm_w t) with
-        |Some (trash, t) -> 
-                print_string "\n";
-                ps (string_of_hmt t)
-        |_-> print_string("No solution\n");;
-
-
-
-(*res testik;;*)
