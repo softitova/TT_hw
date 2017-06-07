@@ -80,6 +80,10 @@ let name_gen () =
         counter := !counter + 1; ret;;
 
 
+
+
+
+
 let rec subst_term lambda oldVar newVar = 
 	match lambda with 
 	|Var(x)    -> if (x = oldVar) then newVar else Var(x)
@@ -88,7 +92,16 @@ let rec subst_term lambda oldVar newVar =
 
 module StringMap = Map.Make(String);;
 
+let fresh_args lm =
+	let rec hepler lm map =
+		match lm with
+			Var v -> if (StringMap.mem v map) then (Var (StringMap.find v map)) else lm
+			| Abs(v, l) ->  
+				(let nn = name_gen () in
+				(Abs(nn, hepler l (StringMap.add v nn map)))) 
+			| App(lr, ll) -> App(hepler lr map, hepler ll map) in
 
+	hepler lm StringMap.empty;;
 
 let rec rename lambda = match lambda with 
         |Abs(x, y) ->(let fr = (name_gen()) in
@@ -98,10 +111,10 @@ let rec rename lambda = match lambda with
 (*print_string(string_of_lambda(rename (lambda_of_string
  * "(\\f.\\x.x)"))^"\n");;*)
 
-let rec beta_reduction_step xx res = match xx with
+let rec beta_reduction_step xx res  = match xx with
         |Var x -> (Var x, res || false)
         |App(Abs(l, r), y) ->  (
-                 (subst_term r l (rename  y), true))
+                 (subst_term r l y, true))
         |App(x, y) -> let l1, r1= beta_reduction_step x res in
                         if (r1 = false) 
                         then let l2, r2 = beta_reduction_step y res in
@@ -110,13 +123,33 @@ let rec beta_reduction_step xx res = match xx with
         |Abs(x, y) -> let l1 , r1 = beta_reduction_step y res in
                         (Abs(x, l1), r1);;
 
-let normal_beta_reduction x = let l, r = beta_reduction_step x false in l;;
+
+
+let normal_beta_reduction x = let l, r = beta_reduction_step (fresh_args x) false in l;;
 
 (*------------------ REDUCE TO NORMAL FORM ------------------*)
-let t1 = "(\\f.\\x.f x) x a";;
-let rec reduce_to_normal_form x = if (is_normal_form x) then x else reduce_to_normal_form (normal_beta_reduction x);;
+let t1 = "(\\f.\\x.f (f x)) (\\f.\\x.f (f x))";;
+let rec reduce_to_normal_form x = 
+        let rec helper x = 
+                if (is_normal_form x) then x else
+                helper(let a, b = beta_reduction_step x false in
+        a) in
+        helper (fresh_args x);;
 print_string (string_of_lambda (reduce_to_normal_form (lambda_of_string t1)));;
-(* print_string(string_of_lambda(reduce_to_normal_form(lambda_of_string"((\\f.(\\x.f (x x)) (\\x.f (x x))) (\\f.\\n.(\\n.n (\\x.\\x.\\y.y) \\x.\\y.x) n (\\f.\\x.f x) ((\\a.\\b.a ((\\a.\\b.\\f.\\x.a f (b f x)) b) \\f.\\x.x) n (f ((\\n.(\\p.p \\x.\\y.x) (n (\\p.\\f.f ((\\p.p \\x.\\y.y) p) ((\\n.\\f.\\x.f (n f x)) ((\\p.p \\x.\\y.y) p))) (\\f.f (\\f.\\x.x) (\\f.\\x.x)))) n))))) \\f.\\x.f (f (f (f (f (f x)))))"))^"\n");; *)
+
+let t0 = "(\\f.\\x.f x) x a";; (* sample, which was fixed *)
+let k = "(\\x.\\y.x)";;
+let i = "(\\x.x)";;
+let s = "(\\x.\\y.\\z.x z (y z))";;
+let w = "(\\x.x x)";;
+let omega = "(" ^ w ^ " " ^ w ^ ")";;
+let t1 = k ^ " a " ^ omega;;
+let t2 = "(\\x.x) x x";;
+let t3 = "(\\f.\\x.f x) (\\f.\\x.x)";;
+let t4 = "(\\x.((\\f.(\\x.x)) x))";;
+
+print_string (Hw1.string_of_lambda (reduce_to_normal_form (Hw1.lambda_of_string
+t1))^"\n");;
 
 
 
