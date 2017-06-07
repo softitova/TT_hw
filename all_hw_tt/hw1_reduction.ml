@@ -12,7 +12,7 @@ let is_alpha_equivalent x y =
 	let counter = ref 0 in
 	
 	let name_generation () =
-        	let ret = "t"^ string_of_int !counter in
+        	let ret = "ξ"^ string_of_int !counter in
        		counter := !counter + 1;
   		ret in
 
@@ -76,7 +76,7 @@ let is_normal_form x = check_normal x true;;
 let counter = ref 0;;
 
 let name_gen () =
-        let ret = "t"^ string_of_int !counter in
+        let ret = "ξ"^ string_of_int !counter in
         counter := !counter + 1; ret;;
 
 
@@ -95,7 +95,8 @@ let rec rename lambda = match lambda with
                 Abs(fr, subst_term (rename y)  x (Var(fr))))
         |App(x, y) -> App((rename x), (rename y))
         |Var(x) -> Var(x);;
-print_string(string_of_lambda(rename (lambda_of_string "(\\f.\\x.x)"))^"\n");;
+(*print_string(string_of_lambda(rename (lambda_of_string
+ * "(\\f.\\x.x)"))^"\n");;*)
 
 let rec beta_reduction_step xx res = match xx with
         |Var x -> (Var x, res || false)
