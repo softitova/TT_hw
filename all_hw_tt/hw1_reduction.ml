@@ -73,6 +73,12 @@ let is_normal_form x = check_normal x true;;
 
 
 (*------------------ NORMAL B REDUCTION ------------------*)
+let counter = ref 0;;
+
+let name_gen () =
+        let ret = "t"^ string_of_int !counter in
+        counter := !counter + 1; ret;;
+
 
 let rec subst_term lambda oldVar newVar = 
 	match lambda with 
@@ -80,9 +86,21 @@ let rec subst_term lambda oldVar newVar =
 	|App(x, y) -> App(subst_term x oldVar newVar, subst_term y oldVar newVar) 
 	|Abs(x, y) -> if (x = oldVar) then Abs(x, y) else Abs(x, subst_term y oldVar newVar);;
 
+module StringMap = Map.Make(String);;
+
+
+
+let rec rename lambda = match lambda with 
+        |Abs(x, y) ->(let fr = (name_gen()) in
+                Abs(fr, subst_term (rename y)  x (Var(fr))))
+        |App(x, y) -> App((rename x), (rename y))
+        |Var(x) -> Var(x);;
+print_string(string_of_lambda(rename (lambda_of_string "(\\f.\\x.x)"))^"\n");;
+
 let rec beta_reduction_step xx res = match xx with
         |Var x -> (Var x, res || false)
-        |App(Abs(l, r), y) -> ((subst_term r l y), true)
+        |App(Abs(l, r), y) ->  (
+                 (subst_term r l (rename  y), true))
         |App(x, y) -> let l1, r1= beta_reduction_step x res in
                         if (r1 = false) 
                         then let l2, r2 = beta_reduction_step y res in
@@ -96,8 +114,8 @@ let normal_beta_reduction x = let l, r = beta_reduction_step x false in l;;
 (*------------------ REDUCE TO NORMAL FORM ------------------*)
 
 let rec reduce_to_normal_form x = if (is_normal_form x) then x else reduce_to_normal_form (normal_beta_reduction x);;
-
-print_string (string_of_lambda (reduce_to_normal_form (lambda_of_string "(\\x.\\y.(x (a d c b)) x y) z")))
+print_string (string_of_lambda (reduce_to_normal_form (lambda_of_string
+"(\\f.\\x.f (f x)) (\\f.\\x.f (f x))")));;
 (* print_string(string_of_lambda(reduce_to_normal_form(lambda_of_string"((\\f.(\\x.f (x x)) (\\x.f (x x))) (\\f.\\n.(\\n.n (\\x.\\x.\\y.y) \\x.\\y.x) n (\\f.\\x.f x) ((\\a.\\b.a ((\\a.\\b.\\f.\\x.a f (b f x)) b) \\f.\\x.x) n (f ((\\n.(\\p.p \\x.\\y.x) (n (\\p.\\f.f ((\\p.p \\x.\\y.y) p) ((\\n.\\f.\\x.f (n f x)) ((\\p.p \\x.\\y.y) p))) (\\f.f (\\f.\\x.x) (\\f.\\x.x)))) n))))) \\f.\\x.f (f (f (f (f (f x)))))"))^"\n");; *)
 
 
