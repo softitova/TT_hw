@@ -103,16 +103,10 @@ let rec rename lambda = match lambda with
 
 let rec beta_reduction_step xx res  = match xx with
         |Var x -> (Var x, res || false)
-        |App(Abs(l, r), y) ->  (
-                 (subst_term r l y, true))
+        |App(Abs(l, r), y) -> (subst_term r l y, true)
         |App(x, y) -> let l1, r1= beta_reduction_step x res in
-                        if (r1 = false) 
-                        then let l2, r2 = beta_reduction_step y res in
-                        (App(l1, l2), r2)
-                        else (App(l1, y), true)
-        |Abs(x, y) -> let l1 , r1 = beta_reduction_step y res in
-                        (Abs(x, l1), r1);;
-
+                        if (r1 = false) then let l2, r2 = beta_reduction_step y res in (App(l1, l2), r2) else (App(l1, y), true)
+        |Abs(x, y) -> let l1 , r1 = beta_reduction_step y res in (Abs(x, l1), r1);;
 
 
 let normal_beta_reduction x = let l, r = beta_reduction_step (fresh_args x) false in l;;
