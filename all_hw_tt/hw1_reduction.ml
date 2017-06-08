@@ -79,11 +79,6 @@ let name_gen () =
         let ret = "ξ"^ string_of_int !counter in
         counter := !counter + 1; ret;;
 
-
-
-
-
-
 let rec subst_term lambda oldVar newVar = match lambda with 
 	|Var(x)    -> if (x = oldVar) then newVar else Var(x)
 	|App(x, y) -> App(subst_term x oldVar newVar, subst_term y oldVar newVar) 
@@ -125,11 +120,7 @@ let normal_beta_reduction x = let l, r = beta_reduction_step (fresh_args x) fals
 (*------------------ REDUCE TO NORMAL FORM ------------------*)
 let t1 = "(\\f.\\x.f (f x)) (\\f.\\x.f (f x))";;
 let rec reduce_to_normal_form x = 
-        let rec helper x = 
-                if (is_normal_form x) then x else
-                helper(let a, b = beta_reduction_step x false in
-        a) in
-        helper (fresh_args x);;
+        let rec helper x = if (is_normal_form x) then x else helper(let a, b = beta_reduction_step x false in a) in helper (fresh_args x);;
 print_string (string_of_lambda (reduce_to_normal_form (lambda_of_string t1)));;
 
 
