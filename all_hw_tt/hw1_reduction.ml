@@ -84,24 +84,19 @@ let name_gen () =
 
 
 
-let rec subst_term lambda oldVar newVar = 
-	match lambda with 
+let rec subst_term lambda oldVar newVar = match lambda with 
 	|Var(x)    -> if (x = oldVar) then newVar else Var(x)
 	|App(x, y) -> App(subst_term x oldVar newVar, subst_term y oldVar newVar) 
 	|Abs(x, y) -> if (x = oldVar) then Abs(x, y) else Abs(x, subst_term y oldVar newVar);;
 
 module StringMap = Map.Make(String);;
 
-let fresh_args lm =
-	let rec hepler lm map =
-		match lm with
-			Var v -> if (StringMap.mem v map) then (Var (StringMap.find v map)) else lm
-			| Abs(v, l) ->  
-				(let nn = name_gen () in
-				(Abs(nn, hepler l (StringMap.add v nn map)))) 
-			| App(lr, ll) -> App(hepler lr map, hepler ll map) in
-
-	hepler lm StringMap.empty;;
+let fresh_args x =
+	let rec hepler x map = match x with
+                        |Var v       -> if (StringMap.mem v map) then (Var (StringMap.find v map)) else x
+			|Abs(v, l)   -> (let fr = name_gen () in (Abs(fr, hepler l (StringMap.add v fr map)))) 
+			|App(lr, ll) -> App(hepler lr map, hepler ll map) in
+	hepler x StringMap.empty;;
 
 let rec rename lambda = match lambda with 
         |Abs(x, y) ->(let fr = (name_gen()) in
@@ -137,19 +132,6 @@ let rec reduce_to_normal_form x =
         helper (fresh_args x);;
 print_string (string_of_lambda (reduce_to_normal_form (lambda_of_string t1)));;
 
-let t0 = "(\\f.\\x.f x) x a";; (* sample, which was fixed *)
-let k = "(\\x.\\y.x)";;
-let i = "(\\x.x)";;
-let s = "(\\x.\\y.\\z.x z (y z))";;
-let w = "(\\x.x x)";;
-let omega = "(" ^ w ^ " " ^ w ^ ")";;
-let t1 = k ^ " a " ^ omega;;
-let t2 = "(\\x.x) x x";;
-let t3 = "(\\f.\\x.f x) (\\f.\\x.x)";;
-let t4 = "(\\x.((\\f.(\\x.x)) x))";;
-
-print_string (Hw1.string_of_lambda (reduce_to_normal_form (Hw1.lambda_of_string
-t1))^"\n");;
 
 
 
